@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.1/jquery.min.js"></script>
+
+
+<script>
+	$(document).ready(function() {
+		$.get("/modbus/cfg", function(data) {
+			const result = data.split("\n");
+			$("#intervall").val(result[0]);
+			var span = document.getElementById("range span")
+			span.textContent=result[0];
+		})
+	})
+
+	function displaySliderValue(eSlider) {
+		eSlider.parentElement.querySelector('span').textContent = eSlider.value;
+	}
+</script>
+</head>
+
+</head>
+
+<body>
+	<h2>Config Modbus</h2>
+	<form action="	" method="post">
+		<div class="container">
+			<label for="intervall">Intervall in Minuten</label>
+			<span id="range span">1</span>
+			<br>
+			<input type="range" min="1" max="60" placeholder="Modbus Abfragperiod in Minuten"
+				name="intervall" value="1" id="intervall" oninput="displaySliderValue(this);">
+			<br>
+			<br>
+			<button type="submit">Save</button>
+		</div>
+	</form>
+	<form action="	" method="post">
+		<div class="container">
+			<label for="parName">Parameter Name</label>
+			<input type="text" placeholder="parName" name="parName" id="parName" value="name" size="10">
+			<label for="hostname">Hostname</label>
+			<input type="text" placeholder="Hostname" name="hostname" id="hostname" value="modbus.local"
+				size="20">
+			<label for="unitID">Unit ID</label>
+			<input type="number" placeholder="unitId" name="unitID" id="unitID" value="3" size="3">
+			<label for="ModbusAdress">Modbus Adresse</label>
+			<input type="number" placeholder="modbusadress" name="modbusadress" id="modbusadress"
+				value="30193" size="6">
+			<label for="biteLenght">Laenge</label>
+			<select id="biteLenght">
+				<option value="l1">1</option>
+				<option value="l2">2</option>
+				<option value="l3">3</option>
+				<option value="l3">4</option>
+			</select>
+			<label for="port">Port Nr.</label>
+			<input type="number" placeholder="port" name="port" id="port" value="502" size="4">
+			<br>
+			<br>
+			<button type="submit">Save</button>
+		</div>
+	</form>
+
+</body>
+</html>
