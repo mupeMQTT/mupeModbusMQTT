@@ -1,4 +1,3 @@
-
 // Copyright Peter Müller mupe
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -22,19 +21,20 @@
 
 #include "nvs_flash.h"
 #include "mupeModbusMQTTnvs.h"
+
 #define NAMESPACE_NAME "Modbuscfg"
-void mupeModbusNvsInit(void){
+void mupeModbusNvsInit(void) {
 	esp_err_t err = nvs_flash_init();
-	if (err == ESP_ERR_NVS_NO_FREE_PAGES || err == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+	if (err == ESP_ERR_NVS_NO_FREE_PAGES
+			|| err == ESP_ERR_NVS_NEW_VERSION_FOUND) {
 		ESP_ERROR_CHECK(nvs_flash_erase());
 		err = nvs_flash_init();
 	}
 }
 
-
-uint8_t  intervallGet() {
+uint8_t intervallGet() {
 	nvs_handle_t my_handle;
-	uint8_t intervall=0;
+	uint8_t intervall = 0;
 	nvs_open(NAMESPACE_NAME, NVS_READWRITE, &my_handle);
 	nvs_get_u8(my_handle, "intervall", &intervall);
 
@@ -52,8 +52,8 @@ void intervallSet(uint8_t intervall) {
 size_t modbusNvsGetStrSize(ModbusNvs *modbus) {
 	nvs_handle_t my_handle;
 	char id[20];
-	sprintf(id,"%llu",modbus->id);
-	size_t strSize=0;
+	sprintf(id, "%llu", modbus->id);
+	size_t strSize = 0;
 	nvs_open(NAMESPACE_NAME, NVS_READWRITE, &my_handle);
 	nvs_get_blob(my_handle, id, NULL, &strSize);
 	nvs_close(my_handle);
@@ -63,20 +63,56 @@ size_t modbusNvsGetStrSize(ModbusNvs *modbus) {
 ModbusNvs* modbusNvsGet(ModbusNvs *modbus) {
 	nvs_handle_t my_handle;
 	char id[20];
-	sprintf(id,"%llu",modbus->id);
-	size_t strSize=0;
+	sprintf(id, "%llu", modbus->id);
+	size_t strSize = 0;
 	nvs_open(NAMESPACE_NAME, NVS_READWRITE, &my_handle);
 	nvs_get_blob(my_handle, id, NULL, &strSize);
 	nvs_get_blob(my_handle, id, modbus, &strSize);
 	nvs_close(my_handle);
 	return modbus;
 }
+
 void modbusNvsSet(ModbusNvs *modbus) {
 	nvs_handle_t my_handle;
 	char id[20];
-	sprintf(id,"%llu",modbus->id);
+	sprintf(id, "%llu", modbus->id);
 	nvs_open(NAMESPACE_NAME, NVS_READWRITE, &my_handle);
-	nvs_set_blob(my_handle, id, modbus,sizeof(modbus));
+	nvs_set_blob(my_handle, id, modbus, sizeof(ModbusNvs));
 	nvs_commit(my_handle);
 	nvs_close(my_handle);
 }
+
+void modbusNvsDel(char * id) {
+	nvs_handle_t my_handle;
+
+	nvs_open(NAMESPACE_NAME, NVS_READWRITE, &my_handle);
+	nvs_erase_key(my_handle, id);
+	nvs_commit(my_handle);
+	nvs_close(my_handle);
+}
+
+void sendModbusCfg(httpd_req_t *req) {
+
+	nvs_iterator_t it = NULL;
+	char value[82];
+	esp_err_t res = nvs_entry_find(NVS_DEFAULT_PART_NAME, NAMESPACE_NAME,
+			NVS_TYPE_BLOB, &it);
+	while (res == ESP_OK) {
+		nvs_entry_info_t info;
+		nvs_entry_info(it, &info); // Can omit error check if parameters are guaranteed to be non-NULL
+		ModbusNvs modbus;
+		modbus.id = atoll(info.key);
+		modbusNvsGet(&modbus);
+		sprintf(value, "<tr><th>%s</th><th>%s</th><th>%hhu</th>",modbus.parameterName, modbus.hostname, modbus.unitId);
+				httpd_resp_send_chunk(req, value, strlen(value));
+		sprintf(value, "<th>%i</th><th>%i</th><th>%i</th>", modbus.adress,modbus.size, modbus.portNr);
+		httpd_resp_send_chunk(req, value, strlen(value));
+		sprintf(value, "<th><button onclick=\"onClickDel(%llu)\">del</button></th></tr>", modbus.id);
+		httpd_resp_send_chunk(req, value, strlen(value));
+
+		res = nvs_entry_next(&it);
+	}
+	nvs_release_iterator(it);
+
+}
+

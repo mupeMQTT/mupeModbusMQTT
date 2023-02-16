@@ -23,6 +23,7 @@
 #ifndef MUPEMODBUSNVS_H
 #define MUPEMODBUSNVS_H
 #include "esp_system.h"
+#include "esp_http_server.h"
 
 typedef struct ModbusNvs{
 	uint64_t id;
@@ -41,6 +42,8 @@ uint8_t intervallGet();
 void intervallSet(uint8_t intervall);
 size_t modbusNvsGetStrSize(ModbusNvs *modbus) ;
 ModbusNvs* modbusNvsGet(ModbusNvs *modbus);
+void modbusNvsDel(char* id);
 void modbusNvsSet(ModbusNvs *modbus);
+void sendModbusCfg(httpd_req_t *req);
 
 #endif

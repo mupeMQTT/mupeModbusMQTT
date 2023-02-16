@@ -10,14 +10,28 @@
 			const result = data.split("\n");
 			$("#intervall").val(result[0]);
 			var span = document.getElementById("range span")
-			span.textContent=result[0];
+			span.textContent = result[0];
 		})
 	})
+	function onClickDel(nrDel) {
+		window.location.href = '/modbus/del/'+nrDel;
+	}
+</script>
 
+<script>
+	$(document).ready(function() {
+		$.get("/modbus/list", function(data) {
+			$("#nlist").html(data);
+		})
+	})
+</script>
+
+<script>
 	function displaySliderValue(eSlider) {
 		eSlider.parentElement.querySelector('span').textContent = eSlider.value;
 	}
 </script>
+
 </head>
 
 </head>
@@ -36,6 +50,10 @@
 			<button type="submit">Save</button>
 		</div>
 	</form>
+	<p></p>
+	<div id="nlist"></div>
+	<p></p>
+
 	<form action="	" method="post">
 		<div class="container">
 			<label for="parName">Parameter Name</label>
@@ -49,12 +67,7 @@
 			<input type="number" placeholder="modbusadress" name="modbusadress" id="modbusadress"
 				value="30193" size="6">
 			<label for="biteLenght">Laenge</label>
-			<select id="biteLenght">
-				<option value="l1">1</option>
-				<option value="l2">2</option>
-				<option value="l3">3</option>
-				<option value="l3">4</option>
-			</select>
+			<input type="number" placeholder="laenge" name="laenge" id="laenge" value="2" size="6">
 			<label for="port">Port Nr.</label>
 			<input type="number" placeholder="port" name="port" id="port" value="502" size="4">
 			<br>
