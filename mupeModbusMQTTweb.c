@@ -47,6 +47,9 @@ esp_err_t root_modbus_post_handler(httpd_req_t *req) {
 	if (find_value("intervall=", buf, value) > 0) {
 		intervallSet(atoi(value));
 	}
+	if (find_value("mqttTopic=", buf, value) > 0) {
+		mqttTopicSet(value);
+	}
 
 	if (find_value("parName=", buf, value) > 0) {
 		strcpy(modbusNvs.parameterName, value);
@@ -98,8 +101,10 @@ esp_err_t modbus_get_cfg(httpd_req_t *req) {
 
 	char value[50];
 	httpd_resp_set_type(req, "text/html");
-	sprintf(value, "%i", intervallGet());
-	strcat(value, "\n");
+	size_t strSize = mqttTopicGetSize();
+	char strtopic[strSize];
+	mqttTopicGet(strtopic);
+	sprintf(value, "%i\n%s\n", intervallGet(),strtopic);
 	httpd_resp_send_chunk(req, value, strlen(value));
 	httpd_resp_send_chunk(req, NULL, 0);
 	return ESP_OK;
@@ -114,9 +119,7 @@ esp_err_t root_modbus_get_handler(httpd_req_t *req) {
 		return modbus_get_list(req);
 	}
 	if (STARTS_WITH(req->uri, "/modbus/del") == 0) {
-
-		modbusNvsDel(&req->uri[12]);
-
+		modbusNvsDel(&(req->uri[12]));
 	}
 	return modbus_get_handler(req);;
 }

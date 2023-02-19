@@ -40,10 +40,14 @@ void mupeModbusNvsInit(void);
 
 uint8_t intervallGet();
 void intervallSet(uint8_t intervall);
+void mqttTopicSet(char * mqttTopic);
+size_t mqttTopicGetSize();
+void mqttTopicGet(char *mqttTopic);
 size_t modbusNvsGetStrSize(ModbusNvs *modbus) ;
 ModbusNvs* modbusNvsGet(ModbusNvs *modbus);
 void modbusNvsDel(char* id);
 void modbusNvsSet(ModbusNvs *modbus);
 void sendModbusCfg(httpd_req_t *req);
+void modbusNvsGetNext(ModbusNvs *modbus);
 
 #endif

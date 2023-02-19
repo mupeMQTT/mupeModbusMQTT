@@ -25,6 +25,7 @@
 #include "mupeModbusMQTT.h"
 #include "mupeMdnsNtp.h"
 #include "mupeModbusMQTTweb.h"
+#include "mupeModbusMQTTnvs.h"
 
 #include "lwip/err.h"
 #include "lwip/sockets.h"
@@ -34,6 +35,7 @@
 #include <esp_log.h>
 #include <esp_system.h>
 #include <esp_wifi.h>
+
 
 static const char *TAG = "Modbus";
 
@@ -69,16 +71,57 @@ TaskHandle_t xHandle = NULL;
 void vTaskModbus() {
 	TickType_t xLastWakeTime;
 	// Block for ms.
-	const TickType_t xFrequency = 100000 / portTICK_PERIOD_MS;
+	TickType_t xFrequency = 10000 / portTICK_PERIOD_MS;
 	waitForNTPConnect();
+	xFrequency = intervallGet() * 1000 * 60 / portTICK_PERIOD_MS;
 	xLastWakeTime = xTaskGetTickCount();
 	xLastWakeTime = xLastWakeTime
 			- (getNowMs() / portTICK_PERIOD_MS) % xFrequency;
 
+	char json [255];
+	char jsonO [200];
+	json[0]=0;
+
+
+
+
 	while (1) {
+		json[0]=0;
+		xFrequency = intervallGet() * 1000 * 60 / portTICK_PERIOD_MS;
 		vTaskDelayUntil(&xLastWakeTime, xFrequency);
 		ESP_LOGI(TAG, "MS-------------------- %llu", getNowMs());
 		ESP_LOGI(TAG, "MS-------------------- %lu", xLastWakeTime);
+		ModbusNvs modbus;
+		modbusNvsGetNext(&modbus);
+		uint64_t ret=0;
+
+		while (modbus.id != 0) {
+			switch (modbus.size) {
+			case 4:
+				ret = mupeModbusReadU32(modbus.hostname, modbus.unitId,
+						modbus.adress, modbus.portNr);
+				ESP_LOGI(TAG, "ret-------------------- %llu", ret);
+				break;
+			case 8:
+				ret = mupeModbusReadU64(modbus.hostname, modbus.unitId,
+						modbus.adress, modbus.portNr);
+				ESP_LOGI(TAG, "ret-------------------- %llu", ret);
+				break;
+			default:
+				break;
+			}
+			char b [50];
+			sprintf(b,"\"%s\":%llu",modbus.parameterName,ret);
+			strcat(jsonO,b);
+			modbusNvsGetNext(&modbus);
+			if (modbus.id != 0){
+				strcat(jsonO,",");
+			}
+
+		}
+		sprintf(json,"{\"src\":\"Modbus\", \"parmas\":{\"ts\":%.2f,%s}}",(float)getNowMs()/1000.0,jsonO);
+		ESP_LOGI(TAG, "id-------------------- %s", json);
+
 	}
 }
 
@@ -107,9 +150,8 @@ void mupeModbusInit() {
 			esp_event_handler_register(WIFI_EVENT, WIFI_EVENT_STA_DISCONNECTED,
 					&disconnect_handler, &xHandle));
 
-	xTaskCreatePinnedToCore(vTaskModbus, "TaskModbus", 2096, NULL,
+	xTaskCreatePinnedToCore(vTaskModbus, "TaskModbus", 4096, NULL,
 	tskIDLE_PRIORITY, &xHandle, 0);
-
 
 }
 

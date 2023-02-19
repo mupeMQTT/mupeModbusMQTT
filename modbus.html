@@ -9,12 +9,13 @@
 		$.get("/modbus/cfg", function(data) {
 			const result = data.split("\n");
 			$("#intervall").val(result[0]);
+			$("#mqttTopic").val(result[1]);
 			var span = document.getElementById("range span")
 			span.textContent = result[0];
 		})
 	})
 	function onClickDel(nrDel) {
-		window.location.href = '/modbus/del/'+nrDel;
+		window.location.href = '/modbus/del/' + nrDel;
 	}
 </script>
 
@@ -34,25 +35,29 @@
 
 </head>
 
-</head>
 
 <body>
 	<h2>Config Modbus</h2>
 	<form action="	" method="post">
 		<div class="container">
+			<br>
+			<label for="mqttTopic">Mqtt Topic</label>
+			<br>
+			<input type="text" placeholder="mqttTopic" name="mqttTopic" id="mqttTopic" value="mqttTopic"
+				size="20">
+			<br>
+			<br>
 			<label for="intervall">Intervall in Minuten</label>
 			<span id="range span">1</span>
 			<br>
 			<input type="range" min="1" max="60" placeholder="Modbus Abfragperiod in Minuten"
 				name="intervall" value="1" id="intervall" oninput="displaySliderValue(this);">
 			<br>
+
 			<br>
 			<button type="submit">Save</button>
 		</div>
 	</form>
-	<p></p>
-	<div id="nlist"></div>
-	<p></p>
 
 	<form action="	" method="post">
 		<div class="container">
@@ -75,6 +80,10 @@
 			<button type="submit">Save</button>
 		</div>
 	</form>
+	<br>
+	<p></p>
+	<div id="nlist"></div>
+	<p></p>
 
 </body>
 </html>
