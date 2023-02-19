@@ -8,6 +8,42 @@ const char *modbus_uri_txt = "Modbus init";
 static const char *TAG = "mupeModbusMQTTWeb";
 #define STARTS_WITH(string_to_check, prefix) (strncmp(string_to_check, prefix, (strlen(prefix))))
 
+char* stringReplace(char *search, char *replace, char *string) {
+	char *tempString, *searchStart;
+	int len = 0;
+
+	// preuefe ob Such-String vorhanden ist
+	searchStart = strstr(string, search);
+	while (searchStart != NULL) {
+
+		// Speicher reservieren
+		tempString = (char*) malloc(strlen(string) * sizeof(char));
+		if (tempString == NULL) {
+			return NULL;
+		}
+
+		// temporaere Kopie anlegen
+		strcpy(tempString, string);
+
+		// ersten Abschnitt in String setzen
+		len = searchStart - string;
+		string[len] = '\0';
+
+		// zweiten Abschnitt anhaengen
+		strcat(string, replace);
+
+		// dritten Abschnitt anhaengen
+		len += strlen(search);
+		strcat(string, (char*) tempString + len);
+
+		// Speicher freigeben
+		free(tempString);
+		searchStart = strstr(string, search);
+	}
+
+	return string;
+}
+
 esp_err_t modbus_get_handler(httpd_req_t *req) {
 	extern const unsigned char modbus_index_start[] asm("_binary_modbus_html_start");
 	extern const unsigned char modbus_index_end[] asm("_binary_modbus_html_end");
@@ -48,6 +84,10 @@ esp_err_t root_modbus_post_handler(httpd_req_t *req) {
 		intervallSet(atoi(value));
 	}
 	if (find_value("mqttTopic=", buf, value) > 0) {
+		char search[] = "%2F";
+		char replace[] = "/";
+
+		stringReplace(search, replace, value);
 		mqttTopicSet(value);
 	}
 
@@ -82,9 +122,10 @@ esp_err_t modbus_get_list(httpd_req_t *req) {
 	char value[70];
 	strcpy(value, "<html> <body><table style=\"width:50%\"> <tr>");
 	httpd_resp_send_chunk(req, value, strlen(value));
-	strcpy(value,"<th>Parameter Name</th><th>Hostname</th><th>Unit ID</th>");
+	strcpy(value, "<th>Parameter Name</th><th>Hostname</th><th>Unit ID</th>");
 	httpd_resp_send_chunk(req, value, strlen(value));
-	strcpy(value, "<th>Modbus Adresse</th><th>Laenge</th><th>Port Nr.</th><th>del</th>");
+	strcpy(value,
+			"<th>Modbus Adresse</th><th>Laenge</th><th>Port Nr.</th><th>del</th>");
 	httpd_resp_send_chunk(req, value, strlen(value));
 
 	sendModbusCfg(req);
@@ -104,7 +145,7 @@ esp_err_t modbus_get_cfg(httpd_req_t *req) {
 	size_t strSize = mqttTopicGetSize();
 	char strtopic[strSize];
 	mqttTopicGet(strtopic);
-	sprintf(value, "%i\n%s\n", intervallGet(),strtopic);
+	sprintf(value, "%i\n%s\n", intervallGet(), strtopic);
 	httpd_resp_send_chunk(req, value, strlen(value));
 	httpd_resp_send_chunk(req, NULL, 0);
 	return ESP_OK;

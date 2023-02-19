@@ -26,6 +26,7 @@
 #include "mupeMdnsNtp.h"
 #include "mupeModbusMQTTweb.h"
 #include "mupeModbusMQTTnvs.h"
+#include "mupeClientMqtt.h"
 
 #include "lwip/err.h"
 #include "lwip/sockets.h"
@@ -82,11 +83,8 @@ void vTaskModbus() {
 	char jsonO [200];
 	json[0]=0;
 
-
-
-
 	while (1) {
-		json[0]=0;
+		jsonO[0]=0;
 		xFrequency = intervallGet() * 1000 * 60 / portTICK_PERIOD_MS;
 		vTaskDelayUntil(&xLastWakeTime, xFrequency);
 		ESP_LOGI(TAG, "MS-------------------- %llu", getNowMs());
@@ -117,9 +115,12 @@ void vTaskModbus() {
 			if (modbus.id != 0){
 				strcat(jsonO,",");
 			}
-
 		}
-		sprintf(json,"{\"src\":\"Modbus\", \"parmas\":{\"ts\":%.2f,%s}}",(float)getNowMs()/1000.0,jsonO);
+		char topic[mqttTopicGetSize()];
+		mqttTopicGet((char *)topic);
+		sprintf(json,"{\"src\":\"%s\", \"parmas\":{\"ts\":%.2f,%s}}",topic,(float)getNowMs()/1000.0,jsonO);
+
+		 mupeClientSend(topic, json);
 		ESP_LOGI(TAG, "id-------------------- %s", json);
 
 	}
