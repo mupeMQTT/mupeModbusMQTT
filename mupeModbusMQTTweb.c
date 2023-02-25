@@ -8,41 +8,7 @@ const char *modbus_uri_txt = "Modbus init";
 static const char *TAG = "mupeModbusMQTTWeb";
 #define STARTS_WITH(string_to_check, prefix) (strncmp(string_to_check, prefix, (strlen(prefix))))
 
-char* stringReplace(char *search, char *replace, char *string) {
-	char *tempString, *searchStart;
-	int len = 0;
 
-	// preuefe ob Such-String vorhanden ist
-	searchStart = strstr(string, search);
-	while (searchStart != NULL) {
-
-		// Speicher reservieren
-		tempString = (char*) malloc(strlen(string) * sizeof(char));
-		if (tempString == NULL) {
-			return NULL;
-		}
-
-		// temporaere Kopie anlegen
-		strcpy(tempString, string);
-
-		// ersten Abschnitt in String setzen
-		len = searchStart - string;
-		string[len] = '\0';
-
-		// zweiten Abschnitt anhaengen
-		strcat(string, replace);
-
-		// dritten Abschnitt anhaengen
-		len += strlen(search);
-		strcat(string, (char*) tempString + len);
-
-		// Speicher freigeben
-		free(tempString);
-		searchStart = strstr(string, search);
-	}
-
-	return string;
-}
 
 esp_err_t modbus_get_handler(httpd_req_t *req) {
 	extern const unsigned char modbus_index_start[] asm("_binary_modbus_html_start");
