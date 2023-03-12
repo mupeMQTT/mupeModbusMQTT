@@ -126,7 +126,7 @@ esp_err_t root_modbus_get_handler(httpd_req_t *req) {
 		return modbus_get_list(req);
 	}
 	if (STARTS_WITH(req->uri, "/modbus/del") == 0) {
-		modbusNvsDel(&(req->uri[12]));
+		modbusNvsDel((char *)&(req->uri[12]));
 	}
 	return modbus_get_handler(req);;
 }

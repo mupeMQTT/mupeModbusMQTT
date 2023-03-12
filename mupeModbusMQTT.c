@@ -37,7 +37,6 @@
 #include <esp_system.h>
 #include <esp_wifi.h>
 
-
 static const char *TAG = "Modbus";
 
 uint16_t trId = 0;
@@ -79,49 +78,48 @@ void vTaskModbus() {
 	xLastWakeTime = xLastWakeTime
 			- (getNowMs() / portTICK_PERIOD_MS) % xFrequency;
 
-	char json [255];
-	char jsonO [200];
-	json[0]=0;
+	char json[255];
+	char jsonO[200];
+	json[0] = 0;
 
 	while (1) {
-		jsonO[0]=0;
+		jsonO[0] = 0;
 		xFrequency = intervallGet() * 1000 * 60 / portTICK_PERIOD_MS;
 		vTaskDelayUntil(&xLastWakeTime, xFrequency);
-		ESP_LOGI(TAG, "MS-------------------- %llu", getNowMs());
-		ESP_LOGI(TAG, "MS-------------------- %lu", xLastWakeTime);
+		uint64_t now=getNowMs();
+
 		ModbusNvs modbus;
 		modbusNvsGetNext(&modbus);
-		uint64_t ret=0;
+		uint64_t ret = 0;
 
 		while (modbus.id != 0) {
 			switch (modbus.size) {
 			case 4:
 				ret = mupeModbusReadU32(modbus.hostname, modbus.unitId,
 						modbus.adress, modbus.portNr);
-				ESP_LOGI(TAG, "ret-------------------- %llu", ret);
 				break;
 			case 8:
 				ret = mupeModbusReadU64(modbus.hostname, modbus.unitId,
 						modbus.adress, modbus.portNr);
-				ESP_LOGI(TAG, "ret-------------------- %llu", ret);
 				break;
 			default:
 				break;
 			}
-			char b [50];
-			sprintf(b,"\"%s\":%llu",modbus.parameterName,ret);
-			strcat(jsonO,b);
+			char b[50];
+			sprintf(b, "\"%s\":%llu", modbus.parameterName, ret);
+			strcat(jsonO, b);
 			modbusNvsGetNext(&modbus);
-			if (modbus.id != 0){
-				strcat(jsonO,",");
+			if (modbus.id != 0) {
+				strcat(jsonO, ",");
 			}
 		}
 		char topic[mqttTopicGetSize()];
-		mqttTopicGet((char *)topic);
-		sprintf(json,"{\"src\":\"%s\", \"parmas\":{\"ts\":%.2f,%s}}",topic,(float)getNowMs()/1000.0,jsonO);
+		mqttTopicGet((char*) topic);
+		sprintf(json, "{\"src\":\"%s\", \"parmas\":{\"ts\":%llu,%s}}", topic,
+				 now / 1000, jsonO);
 
-		 mupeClientSend(topic, json);
-		ESP_LOGI(TAG, "id-------------------- %s", json);
+		mupeClientSend(topic, json);
+		ESP_LOGI(TAG, "vTaskModbus %s", json);
 
 	}
 }
