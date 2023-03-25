@@ -159,9 +159,13 @@ uint64_t mupeModbusReadU64(char *hostname, uint8_t unitIdentifier,
 	uint8_t *ret;
 	ret = mupeModbusRead(hostname, unitIdentifier, dataAddress, 8, port);
 
-	return ret[0] * 0x100000000000000 + ret[1] * 0x1000000000000
-			+ ret[2] * 0x10000000000 + ret[3] * 0x100000000 + ret[4] * 0x1000000
-			+ ret[5] * 0x10000 + ret[6] * 0x100 + ret[7];
+	return ret[0] * 0x100000000000000 +
+		   ret[1] * 0x1000000000000
+		 + ret[2] * 0x10000000000 +
+		   ret[3] * 0x100000000 +
+		   ret[4] * 0x1000000
+		  +ret[5] * 0x10000 +
+		   ret[6] * 0x100 + ret[7];
 }
 
 uint32_t mupeModbusReadU32(char *hostname, uint8_t unitIdentifier,
