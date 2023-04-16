@@ -67,6 +67,9 @@ payloadST payload;
 payloadSTk payloadRet;
 
 TaskHandle_t xHandle = NULL;
+size_t _ok = 0;
+size_t _ok_2 = 0;
+
 
 void vTaskModbus() {
 	TickType_t xLastWakeTime;
@@ -83,16 +86,19 @@ void vTaskModbus() {
 	json[0] = 0;
 
 	while (1) {
+		_ok = 0;
+		_ok_2=0;
 		jsonO[0] = 0;
 		xFrequency = intervallGet() * 1000 * 60 / portTICK_PERIOD_MS;
 		vTaskDelayUntil(&xLastWakeTime, xFrequency);
-		uint64_t now=getNowMs();
+		uint64_t now = getNowMs();
 
 		ModbusNvs modbus;
 		modbusNvsGetNext(&modbus);
 		uint64_t ret = 0;
 
 		while (modbus.id != 0) {
+			_ok_2++;
 			switch (modbus.size) {
 			case 4:
 				ret = mupeModbusReadU32(modbus.hostname, modbus.unitId,
@@ -116,11 +122,11 @@ void vTaskModbus() {
 		char topic[mqttTopicGetSize()];
 		mqttTopicGet((char*) topic);
 		sprintf(json, "{\"src\":\"%s\", \"parmas\":{\"ts\":%llu,%s}}", topic,
-				 now / 1000, jsonO);
-
-		mupeClientSend(topic, json);
-		ESP_LOGI(TAG, "vTaskModbus %s", json);
-
+				now / 1000, jsonO);
+		if (_ok == _ok_2) {
+			mupeClientSend(topic, json);
+			ESP_LOGI(TAG, "vTaskModbus %s", json);
+		}
 	}
 }
 
@@ -159,13 +165,9 @@ uint64_t mupeModbusReadU64(char *hostname, uint8_t unitIdentifier,
 	uint8_t *ret;
 	ret = mupeModbusRead(hostname, unitIdentifier, dataAddress, 8, port);
 
-	return ret[0] * 0x100000000000000 +
-		   ret[1] * 0x1000000000000
-		 + ret[2] * 0x10000000000 +
-		   ret[3] * 0x100000000 +
-		   ret[4] * 0x1000000
-		  +ret[5] * 0x10000 +
-		   ret[6] * 0x100 + ret[7];
+	return ret[0] * 0x100000000000000 + ret[1] * 0x1000000000000
+			+ ret[2] * 0x10000000000 + ret[3] * 0x100000000 + ret[4] * 0x1000000
+			+ ret[5] * 0x10000 + ret[6] * 0x100 + ret[7];
 }
 
 uint32_t mupeModbusReadU32(char *hostname, uint8_t unitIdentifier,
@@ -230,6 +232,7 @@ uint8_t* mupeModbusRead(char *hostname, uint8_t unitIdentifier,
 	// Data received
 	else {
 		ESP_LOGI(TAG, "Received %d bytes from %s:", len, hostname);
+		_ok ++;
 	}
 	shutdown(sock, 0);
 	close(sock);

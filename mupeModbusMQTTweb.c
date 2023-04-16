@@ -8,8 +8,6 @@ const char *modbus_uri_txt = "Modbus init";
 static const char *TAG = "mupeModbusMQTTWeb";
 #define STARTS_WITH(string_to_check, prefix) (strncmp(string_to_check, prefix, (strlen(prefix))))
 
-
-
 esp_err_t modbus_get_handler(httpd_req_t *req) {
 	extern const unsigned char modbus_index_start[] asm("_binary_modbus_html_start");
 	extern const unsigned char modbus_index_end[] asm("_binary_modbus_html_end");
@@ -50,17 +48,11 @@ esp_err_t root_modbus_post_handler(httpd_req_t *req) {
 		intervallSet(atoi(value));
 	}
 	if (find_value("mqttTopic=", buf, value) > 0) {
-		char search[] = "%2F";
-		char replace[] = "/";
-
-		stringReplace(search, replace, value);
 		mqttTopicSet(value);
 	}
-
 	if (find_value("parName=", buf, value) > 0) {
 		strcpy(modbusNvs.parameterName, value);
 	}
-
 	if (find_value("hostname=", buf, value) > 0) {
 		strcpy(modbusNvs.hostname, value);
 	}
@@ -126,7 +118,7 @@ esp_err_t root_modbus_get_handler(httpd_req_t *req) {
 		return modbus_get_list(req);
 	}
 	if (STARTS_WITH(req->uri, "/modbus/del") == 0) {
-		modbusNvsDel((char *)&(req->uri[12]));
+		modbusNvsDel((char*) &(req->uri[12]));
 	}
 	return modbus_get_handler(req);;
 }
